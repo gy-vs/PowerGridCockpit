@@ -26,13 +26,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
-
-interface GenItem { name: string; value: number; color: string; pct: string }
+import { getGenerationPieOption, GENERATION_COLORS, type GenerationItem } from '../configs/generationPieConfig'
 
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
 
-const COLORS = ['#00d4ff', '#00ff88', '#0080ff', '#ff9500', '#7b68ee', '#ff4444']
 const SOURCES = [
   { name: '火力发电', baseVal: 9.2 },
   { name: '水力发电', baseVal: 5.8 },
@@ -42,41 +40,17 @@ const SOURCES = [
   { name: '其他新能源', baseVal: 1.2 }
 ]
 
-const legendData = ref<GenItem[]>([])
+const legendData = ref<GenerationItem[]>([])
 
-function generateData(): GenItem[] {
+function generateData(): GenerationItem[] {
   const vals = SOURCES.map(s => parseFloat((s.baseVal + (Math.random() - 0.5) * 0.3).toFixed(2)))
   const total = vals.reduce((a, b) => a + b, 0)
   return SOURCES.map((s, i) => ({
     name: s.name,
     value: vals[i],
-    color: COLORS[i],
+    color: GENERATION_COLORS[i],
     pct: ((vals[i] / total) * 100).toFixed(1)
   }))
-}
-
-function buildOption(data: GenItem[]) {
-  return {
-    backgroundColor: 'transparent',
-    series: [{
-      type: 'pie',
-      radius: ['38%', '68%'],
-      center: ['50%', '50%'],
-      data: data.map(d => ({ name: d.name, value: d.value })),
-      itemStyle: {
-        color: (params: { dataIndex: number }) => COLORS[params.dataIndex],
-        borderColor: '#050a1a',
-        borderWidth: 2
-      },
-      label: { show: false },
-      emphasis: {
-        itemStyle: {
-          shadowBlur: 20,
-          shadowColor: 'rgba(0, 212, 255, 0.5)'
-        }
-      }
-    }]
-  }
 }
 
 let timer: ReturnType<typeof setInterval>
@@ -87,10 +61,10 @@ onMounted(() => {
   if (!chartRef.value) return
   chart = echarts.init(chartRef.value)
   legendData.value = generateData()
-  chart.setOption(buildOption(legendData.value))
+  chart.setOption(getGenerationPieOption(legendData.value))
   timer = setInterval(() => {
     legendData.value = generateData()
-    chart?.setOption(buildOption(legendData.value))
+    chart?.setOption(getGenerationPieOption(legendData.value))
   }, 8000)
   window.addEventListener('resize', handleResize)
 })
