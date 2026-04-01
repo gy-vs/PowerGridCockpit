@@ -26,8 +26,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as echarts from 'echarts'
-
-interface GenItem { name: string; value: number; color: string; pct: string }
+import { getGenerationPieConfig, GenItem } from '../configs/generationPieConfig'
 
 const chartRef = ref<HTMLElement>()
 let chart: echarts.ECharts | null = null
@@ -55,30 +54,6 @@ function generateData(): GenItem[] {
   }))
 }
 
-function buildOption(data: GenItem[]) {
-  return {
-    backgroundColor: 'transparent',
-    series: [{
-      type: 'pie',
-      radius: ['38%', '68%'],
-      center: ['50%', '50%'],
-      data: data.map(d => ({ name: d.name, value: d.value })),
-      itemStyle: {
-        color: (params: { dataIndex: number }) => COLORS[params.dataIndex],
-        borderColor: '#050a1a',
-        borderWidth: 2
-      },
-      label: { show: false },
-      emphasis: {
-        itemStyle: {
-          shadowBlur: 20,
-          shadowColor: 'rgba(0, 212, 255, 0.5)'
-        }
-      }
-    }]
-  }
-}
-
 let timer: ReturnType<typeof setInterval>
 
 function handleResize() { chart?.resize() }
@@ -87,10 +62,10 @@ onMounted(() => {
   if (!chartRef.value) return
   chart = echarts.init(chartRef.value)
   legendData.value = generateData()
-  chart.setOption(buildOption(legendData.value))
+  chart.setOption(getGenerationPieConfig(legendData.value, COLORS))
   timer = setInterval(() => {
     legendData.value = generateData()
-    chart?.setOption(buildOption(legendData.value))
+    chart?.setOption(getGenerationPieConfig(legendData.value, COLORS))
   }, 8000)
   window.addEventListener('resize', handleResize)
 })
